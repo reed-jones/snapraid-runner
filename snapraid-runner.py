@@ -1,18 +1,23 @@
+#!/usr/bin/env python3
 # -*- coding: utf8 -*-
 from __future__ import division
 
 import argparse
-import ConfigParser
+import sys
+if sys.version_info[0] > 2:
+    import configparser as ConfigParser
+    from io import StringIO
+else:
+    import ConfigParser
+    from cStringIO import StringIO
 import logging
 import logging.handlers
 import os.path
 import subprocess
-import sys
 import threading
 import time
 import traceback
 from collections import Counter, defaultdict
-from cStringIO import StringIO
 
 # Global variables
 config = None
@@ -21,7 +26,7 @@ email_log = None
 
 def tee_log(infile, out_lines, log_level):
     """
-    Create a thread thot saves all the output on infile to out_lines and
+    Create a thread that saves all the output on infile to out_lines and
     logs every line with log_level
     """
     def tee_thread():
@@ -50,7 +55,9 @@ def snapraid_command(command, args={}, ignore_errors=False):
     p = subprocess.Popen(
         [config["snapraid"]["executable"], command] + arguments,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.PIPE,
+        universal_newlines=True
+    )
     out = []
     threads = [
         tee_log(p.stdout, out, logging.OUTPUT),
@@ -213,14 +220,14 @@ def main():
         load_config(args)
     except:
         print("unexpected exception while loading config")
-        print traceback.format_exc()
+        print(traceback.format_exc())
         sys.exit(2)
 
     try:
         setup_logger()
     except:
         print("unexpected exception while setting up logging")
-        print traceback.format_exc()
+        print(traceback.format_exc())
         sys.exit(2)
 
     try:
